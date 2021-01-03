@@ -9,7 +9,8 @@ func mapUrls(){
 	router.GET("/ping", controllers.Ping)
 
 	// Call func in users_controller 
-	router.GET("/users", controllers.GetUser)
-	router.GET("/users/search", controllers.SearchUser)
+	router.GET("/users/:user_id", controllers.GetUser)
+	// router.GET("/users/search", controllers.SearchUser)
 	router.POST("/users", controllers.CreateUser)
+
 }
