@@ -4,6 +4,8 @@ import (
 	"../../utils/errors"
 	"fmt"
 	"../../utils/date_utils"
+	"../../datasources/mysql/users_db"
+	
 )
 
 var(
@@ -14,6 +16,11 @@ var(
 // Set it to pointer which when setting the user info, it will 
 // pass it into the real user instead killing it after the func is done
 func (user *User)Get()  *errors.RestErr{
+
+	if err := users_db.Client.Ping(); err != nil{
+		panic(err)
+	}
+
 	result := usersDB[user.Id]
 	if result == nil{
 		return errors.NewBadNotFoundError(fmt.Sprintf("user %d not found", user.Id))
