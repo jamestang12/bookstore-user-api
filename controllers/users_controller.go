@@ -18,6 +18,7 @@ func GetUser(c *gin.Context){
 		c.JSON(err.Status, err)
 		return
 	}
+	// Getting user by using the func located in users_service
 	user, getErr := services.GetUser(userId)
 	if getErr != nil{
 		c.JSON(getErr.Status, getErr)
