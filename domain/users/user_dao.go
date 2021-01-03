@@ -5,7 +5,13 @@ import (
 	"fmt"
 	"../../utils/date_utils"
 	"../../datasources/mysql/users_db"
+	"strings"
 	
+)
+
+const(
+	queryInsertUser = "INSERT INTO users(first_name, last_name, email, date_created) VALUES(?,?,?,?);"
+
 )
 
 var(
@@ -35,16 +41,34 @@ func (user *User)Get()  *errors.RestErr{
 }
 
 func (user *User)Save() *errors.RestErr{
-	current := usersDB[user.Id]
-	if current != nil{
-		if current.Email == user.Email{
-			return errors.NewBadRequestError(fmt.Sprintf("email %s already registered", user.Email))
-		}
-		return errors.NewBadRequestError(fmt.Sprintf("user %d already exists", user.Id))
+	stmt, err := users_db.Client.Prepare(queryInsertUser)
+	if err != nil{
+		return errors.NewInternalServerError(err.Error())
 	}
+	// Close the stmt after the request to the db is done
+	defer stmt.Close()
 
 	user.DateCreated = date_utils.GetNowString()
 
-	usersDB[user.Id] = user
+	insertResult, err := stmt.Exec(user.FirstName, user.LastName, user.Email, user.DateCreated)
+	if err != nil{
+		if strings.Contains(err.Error(), "email_UNIQUE"){
+			return errors.NewInternalServerError(fmt.Sprintf("email: %s alreayd exists", user.Email))
+		}
+		return errors.NewInternalServerError(fmt.Sprintf("error when trying to save user: %s", err.Error()))		
+	}	
+
+	// result, err := users_db.Client.Exec(queryInsertUser, user.FirstName, user.LastName, user.Email, user.DateCreated)
+	// if err != nil {
+
+	// }
+
+	userId, err := insertResult.LastInsertId()
+	if err != nil {
+		return errors.NewInternalServerError(fmt.Sprintf("error when trying to save user: %s", err.Error()))		
+	}
+	
+	user.Id = userId
+
 	return nil
 }
