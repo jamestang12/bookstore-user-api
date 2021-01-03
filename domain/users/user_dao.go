@@ -5,13 +5,11 @@ import (
 	"fmt"
 	"../../utils/date_utils"
 	"../../datasources/mysql/users_db"
-	"strings"
-	
+	"../../utils/mysql_utils"
 )
 
 const(
 	queryInsertUser = "INSERT INTO users(first_name, last_name, email, date_created) VALUES(?,?,?,?);"
-	indexUniqueEmail = "email_UNIQUE"
 	quertGetUser = "SELECT id,first_name, last_name, email, date_created FROM users WHERE id = ?;"
 	errorNoRows = "no rows in result set"
 )
@@ -34,12 +32,10 @@ func (user *User)Get()  *errors.RestErr{
 
 	// No need to close stmt since only getting one row
 	result := stmt.QueryRow(user.Id)
-	// Insert data into the suer struct
-	if err := result.Scan(&user.Id, &user.FirstName, &user.LastName, &user.Email, &user.DateCreated); err != nil {
-		if strings.Contains(err.Error(), errorNoRows){
-			return errors.NewInternalServerError(fmt.Sprintf("user %d not found", user.Id))
-		}
-		return errors.NewInternalServerError(fmt.Sprintf("error when trying to get user %d: %s", user.Id, err.Error()))
+	// Insert data into the uer struct
+	if getErr := result.Scan(&user.Id, &user.FirstName, &user.LastName, &user.Email, &user.DateCreated); getErr != nil {
+		// Calling the error handle func in mysql_utils 
+		return mysql_utils.ParseError(getErr)
 	}
 
 	return nil
@@ -55,12 +51,30 @@ func (user *User)Save() *errors.RestErr{
 
 	user.DateCreated = date_utils.GetNowString()
 
-	insertResult, err := stmt.Exec(user.FirstName, user.LastName, user.Email, user.DateCreated)
-	if err != nil{
-		if strings.Contains(err.Error(), indexUniqueEmail){
-			return errors.NewInternalServerError(fmt.Sprintf("email: %s alreayd exists", user.Email))
-		}
-		return errors.NewInternalServerError(fmt.Sprintf("error when trying to save user: %s", err.Error()))		
+	insertResult, saveErr := stmt.Exec(user.FirstName, user.LastName, user.Email, user.DateCreated)
+	if saveErr != nil{
+
+
+		// Calling the error handle func in mysql_utils 
+		return mysql_utils.ParseError(saveErr)
+
+
+		// sqlErr, ok := saveErr.(*mysql.MySQLError)
+		// if  !ok{
+		// 	return errors.NewInternalServerError(fmt.Sprintf("error when trying to save user: %s", saveErr.Error()))
+		// }
+
+		// fmt.Println(sqlErr.Number)
+		// fmt.Println(sqlErr.Message)
+		// // Switch case depend by the sql number
+		// switch sqlErr.Number {
+		// case 1062:
+		// 	return errors.NewInternalServerError(fmt.Sprintf("error when trying to save user: %s", user.Email))
+		// }
+		// return errors.NewInternalServerError(fmt.Sprintf("error when trying to save user: %s", saveErr.Error()))
+
+
+		
 	}	
 
 	// result, err := users_db.Client.Exec(queryInsertUser, user.FirstName, user.LastName, user.Email, user.DateCreated)
