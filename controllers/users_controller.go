@@ -89,3 +89,26 @@ func UpdateUser(c *gin.Context)  {
 	}
 	c.JSON(http.StatusOK, result)
 }
+
+func DeleteUser(c *gin.Context){
+	userId, userErr := strconv.ParseInt(c.Param("user_id"),10, 64)
+	if(userErr) != nil{
+		err := errors.NewBadRequestError("Invalid user id")
+		c.JSON(err.Status, err)
+		return
+	}
+
+	if err := services.DeleUser(userId); err != nil{
+		c.JSON(err.Status, err)
+		return
+	}
+	c.JSON(http.StatusOK, map[string]string{"status": "deleted"})
+}
+
+func getUserId(userIdParam string)(int64, *errors.RestErr){
+	userId, userErr := strconv.ParseInt(userIdParam,10, 64)
+	if(userErr) != nil{
+		return 0, errors.NewBadRequestError("Invalid user id")
+	}
+	return userId,nil
+}

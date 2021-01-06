@@ -59,3 +59,8 @@ func UpdateUser(isPantial bool,user users.User)(*users.User, *errors.RestErr){
 
 	return current, nil
 }
+
+func DeleUser(userId int64) *errors.RestErr{
+	user := &users.User{Id: userId}
+	return user.Delete()
+}
