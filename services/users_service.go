@@ -3,6 +3,8 @@ package services
 import (
 	"../domain/users"
 	"../utils/errors"
+	"../utils/date_utils"
+
 )
 
 func GetUser(userId int64) (*users.User, *errors.RestErr){
@@ -19,7 +21,8 @@ func CreateUser(user users.User) (*users.User, *errors.RestErr){
 	if err := user.Validate(); err != nil{
 		return nil, err
 	}
-
+	user.DateCreated = date_utils.GetNowDBFormat()
+	user.Status = users.StatusActive
 	if err := user.Save(); err != nil{
 		return nil, err
 	}
@@ -63,4 +66,10 @@ func UpdateUser(isPantial bool,user users.User)(*users.User, *errors.RestErr){
 func DeleUser(userId int64) *errors.RestErr{
 	user := &users.User{Id: userId}
 	return user.Delete()
+}
+
+func Search(status string) ([]users.User, *errors.RestErr)  {
+	dao := &users.User{}
+	return dao.FindByStatus(status)
+
 }
