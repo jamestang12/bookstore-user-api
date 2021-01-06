@@ -8,7 +8,8 @@ import (
 	"../../utils/mysql_utils"
 )
 
-const(
+const(   			   
+	queryUpdateUser = "UPDATE users SET first_name=?, last_name=?, email=? WHERE id=?;"
 	queryInsertUser = "INSERT INTO users(first_name, last_name, email, date_created) VALUES(?,?,?,?);"
 	quertGetUser = "SELECT id,first_name, last_name, email, date_created FROM users WHERE id = ?;"
 	errorNoRows = "no rows in result set"
@@ -89,5 +90,18 @@ func (user *User)Save() *errors.RestErr{
 	
 	user.Id = userId
 
+	return nil
+}
+
+func (user *User)Update() *errors.RestErr{
+	stmt, err := users_db.Client.Prepare(queryUpdateUser)
+	if err != nil{
+		return errors.NewInternalServerError(err.Error())
+	}
+	defer stmt.Close()
+	_, err1 := stmt.Exec(user.FirstName, user.LastName, user.Email, user.Id)
+	if err1 != nil{
+		return mysql_utils.ParseError(err)
+	}
 	return nil
 }

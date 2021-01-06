@@ -58,3 +58,34 @@ func CreateUser(c *gin.Context){
 func SearchUser(c *gin.Context){
 	c.String(http.StatusNotImplemented, "implement me!")
 }
+
+
+func UpdateUser(c *gin.Context)  {
+	userId, userErr := strconv.ParseInt(c.Param("user_id"),10, 64)
+	if(userErr) != nil{
+		err := errors.NewBadRequestError("Invalid user id")
+		c.JSON(err.Status, err)
+		return
+	}
+	var user users.User
+	
+	// Take in request body than turn JSON to user struct and check if json body is vaild
+	if err := c.ShouldBindJSON(&user); err != nil {
+		restErr := errors.NewBadRequestError("Invaild json body")
+		c.JSON(restErr.Status, restErr)
+		fmt.Println(err)
+		return 
+	}
+
+	user.Id = userId
+
+	isPantial := c.Request.Method == http.MethodPatch
+
+
+	result, err := services.UpdateUser(isPantial,user)
+	if err != nil{
+		c.JSON(err.Status, err)
+		return
+	}
+	c.JSON(http.StatusOK, result)
+}
