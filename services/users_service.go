@@ -4,7 +4,7 @@ import (
 	"../domain/users"
 	"../utils/errors"
 	"../utils/date_utils"
-
+	"../utils/crypto_utils"
 )
 
 func GetUser(userId int64) (*users.User, *errors.RestErr){
@@ -22,6 +22,7 @@ func CreateUser(user users.User) (*users.User, *errors.RestErr){
 		return nil, err
 	}
 	user.DateCreated = date_utils.GetNowDBFormat()
+	user.Password = crypto_utils.GetMd5(user.Password)
 	user.Status = users.StatusActive
 	if err := user.Save(); err != nil{
 		return nil, err
@@ -68,7 +69,7 @@ func DeleUser(userId int64) *errors.RestErr{
 	return user.Delete()
 }
 
-func Search(status string) ([]users.User, *errors.RestErr)  {
+func Search(status string) (users.Users, *errors.RestErr)  {
 	dao := &users.User{}
 	return dao.FindByStatus(status)
 
