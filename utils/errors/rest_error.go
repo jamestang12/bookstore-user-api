@@ -2,6 +2,7 @@ package errors
 
 import (
 	"net/http"
+	"errors"
 )
 
 type RestErr struct {
@@ -16,6 +17,10 @@ func NewBadRequestError(message string) *RestErr{
 		Message : message,
 		Error   : "bad request",
 	}
+}
+
+func NewFoundError(msg string) error{
+	return errors.New(msg)
 }
 
 func NewBadNotFoundError(message string) *RestErr{

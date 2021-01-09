@@ -2,6 +2,7 @@ package app
 
 import (
 	"github.com/gin-gonic/gin"
+	"../logger"
 )
 
 var(
@@ -11,5 +12,6 @@ var(
 func StartApplication(){
 	// Call the router
 	mapUrls()
+	logger.Info("About to start the application.....")
 	router.Run( ":8080")
 }
