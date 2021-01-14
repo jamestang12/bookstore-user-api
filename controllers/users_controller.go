@@ -5,6 +5,7 @@ import (
 	"net/http"
 	"strconv"
 
+	"../../bookstore_oauth_go/oauth"
 	"../domain/users"
 	"../services"
 	"../utils/errors"
@@ -13,6 +14,12 @@ import (
 
 // func that get call in url_mapings(router)
 func GetUser(c *gin.Context) {
+
+	if err := oauth.AuthenticatRequest(c.Request); err != nil {
+		c.JSON(err.Status, err)
+		return
+	}
+
 	userId, userErr := strconv.ParseInt(c.Param("user_id"), 10, 64)
 	if (userErr) != nil {
 		err := errors.NewBadRequestError("Invalid user id")
@@ -25,7 +32,15 @@ func GetUser(c *gin.Context) {
 		c.JSON(getErr.Status, getErr)
 		return
 	}
-	c.JSON(http.StatusOK, user.Marshall(c.GetHeader("X-Public") == "true"))
+
+	// If caller id is the same as the user id than it will return a private return which show all the info
+	if oauth.GetCallerId(c.Request) == user.Id {
+		c.JSON(http.StatusOK, user.Marshall(false))
+		return
+
+	}
+	// If caller id is not the same as the user id than it will return a public return which show only a part of the info
+	c.JSON(http.StatusOK, user.Marshall(oauth.IsPublic(c.Request)))
 
 	//c.String(http.StatusNotImplemented, "implement me!")
 
@@ -40,6 +55,11 @@ func CreateUser(c *gin.Context) {
 		c.JSON(restErr.Status, restErr)
 		fmt.Println(err)
 		return
+	}
+
+	if callerId := oauth.GetCallerId(c.Request); callerId == 0 {
+		err := errors.RestErr{Status: http.StatusUnauthorized, Message: "resource not avai;able"}
+		c.JSON(err.Status, err)
 	}
 
 	// Create user by using the func located in users_service
